@@ -40,3 +40,6 @@ coverage/
 Thumbs.db
 .vscode/
 .idea/
+
+# Uploads (temp files - stored in Cloudinary)
+server/uploads/

@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
+    isDemo: {type:Boolean,default:false},
+    demoKey: {type:String,index:true},
+    teachingTopic: {type:String},
     name: {
         type: String,
         required: true

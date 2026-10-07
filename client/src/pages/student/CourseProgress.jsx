@@ -227,10 +227,11 @@ const CourseProgress = () => {
                         />
                     ) : (
                         <div className='w-full h-64 bg-gray-900 flex items-center justify-center rounded-lg'>
-                            <p className='text-gray-400'>No video available</p>
+                            <p className='text-gray-400'>{currentLecture?.content ? 'Written lesson below' : 'No video available'}</p>
                         </div>
                     )}
 
+                    {currentLecture?.content && <article className="my-5 rounded-xl border bg-card p-5"><p className="mb-3 text-xs font-semibold uppercase tracking-widest text-amber-700 dark:text-amber-300">{currentLecture.isDemo ? 'Written demo lesson' : 'Lesson notes'}</p><div className="whitespace-pre-wrap text-sm leading-7">{currentLecture.content}</div></article>}
                     <div className='mt-2'>
                         <h3 className='font-medium text-lg'>
                             Lecture {lectureIndex >= 0 ? lectureIndex + 1 : 1} :{" "}

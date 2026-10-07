@@ -1,3 +1,4 @@
+import PageState from '@/components/PageState'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -41,10 +42,10 @@ const CreateLecture = () => {
 
 
     return (
-        <div className='flex-1 mx-10'>
+        <div className='max-w-3xl'>
             <div className='mb-4'>
                 <h1 className='font-bold text-xl'>
-                    Let’s add lecture details for your new lecture
+                    Add a lecture
                 </h1>
             </div>
 
@@ -80,7 +81,7 @@ const CreateLecture = () => {
                 </div>
                 <div className='mt-10'>
                     {
-                        lectureLoading ? (<p>Loading Lecture</p>) : lectureError ? (<p>Failed to load lectures..</p>) : lectureData.lectures.length === 0 ? <p>No lecture availabel</p> :
+                        lectureLoading ? (<PageState loading title="Loading lectures" />) : lectureError ? (<PageState error title="Lectures couldn't load" onRetry={refetch} />) : lectureData?.lectures?.length === 0 ? <PageState title="No lectures yet" description="Add the first lecture using the form above." /> :
                             (
                                 lectureData.lectures.map((lecture, index) => (<Lecture key={lecture._id} lecture={lecture} courseId={courseId} index={index} />))
 

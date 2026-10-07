@@ -7,10 +7,10 @@ const EditCourse = () => {
 
     return (
         <div className='flex-1'>
-            <div className='flex items-center justify-between mb-4 '>
-                <h1 className='font-bold text-xl'>Add detaile information regarding course</h1>
+            <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 '>
+                <h1 className='font-bold text-xl'>Edit course details</h1>
                 <Link to='lecture'>
-                    <Button className="hover:text-blue-300">Go to lectures page</Button>
+                    <Button className="hover:text-blue-300">Manage lectures</Button>
                 </Link>
 
             </div>

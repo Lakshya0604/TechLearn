@@ -1,3 +1,4 @@
+import PageState from '@/components/PageState'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
@@ -125,8 +126,8 @@ const CourseProgress = () => {
     }, [inCompletedSuccess, markInCompleteData, refetch]);
 
     // ✅ Now we can do conditional returns AFTER all hooks
-    if (isLoading) return <h1>Loading...</h1>;
-    if (isError || !data) return <h1>Error loading course progress</h1>;
+    if (isLoading) return <div className="p-6"><PageState loading title="Loading your progress" /></div>;
+    if (isError || !data) return <div className="p-6"><PageState error title="Your progress couldn't load" onRetry={refetch} /></div>;
     if (!courseDetails) return <h1>Course not found</h1>;
     if (!lectures || lectures.length === 0) return <h1>No lectures available</h1>;
 

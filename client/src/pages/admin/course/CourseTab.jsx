@@ -105,7 +105,7 @@ const CourseTab = () => {
             toast.success(data.message || "course updated")
         }
         if (error) {
-            toast.error(error.data.message || "failed to update course")
+            toast.error(error?.data?.message || "failed to update course")
         }
     }, [isSuccess, error])
 
@@ -116,23 +116,23 @@ const CourseTab = () => {
 
     return (
         <Card>
-            <CardHeader className="flex flex-row justify-between">
+            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:justify-between">
                 <div>
                     <CardTitle>Basic course information
                         <CardDescription>
-                            Make Changes to your course here.Click save when you are done
+                            Update the details, then save your changes.
                         </CardDescription>
                     </CardTitle>
                 </div>
                 <div className='space-x-2'>
-                    <Button disabled={courseByIdData?.course.lectures.length === 0} variant="outline" onClick={() => publishStatusHandler(courseByIdData?.course.isPublished ? "false" : "true")}>
+                    <Button disabled={courseByIdData?.course?.lectures?.length === 0} variant="outline" onClick={() => publishStatusHandler(courseByIdData?.course.isPublished ? "false" : "true")}>
                         {
                             isPublished ?
-                                "UnPublished"
-                                : "Published"
+                                "Unpublish"
+                                : "Publish"
                         }
                     </Button>
-                    <Button>Remove Course</Button>
+                    
                 </div>
             </CardHeader>
             <CardContent>

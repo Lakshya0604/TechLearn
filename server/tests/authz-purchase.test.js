@@ -235,3 +235,60 @@ test('video upload signing is owner-only and respects provider size cap, not dur
         assert.equal((await owner.post(`/api/v1/media/video-upload-signature/${id}`).send({size:0})).status,400);
     } finally {cloudinary.api.usage = originalUsage;}
 });
+
+test('social likes are idempotent, comments are plain text and author-only',async()=>{
+ const a=request.agent(app),b=request.agent(app);
+ const ar=await registerUser(a,{name:'Social A',email:'sociala@test.com'});
+ await registerUser(b,{name:'Social B',email:'socialb@test.com'});
+ const c=await Course.create({courseTitle:'Social course',category:'Frontend',isPublished:true});
+ const url=`/api/v1/course/social/${c._id}`;
+ assert.equal((await request(app).put(`${url}/like`).send({liked:true})).status,401);
+ for(let k=0;k<2;k++)assert.equal((await a.put(`${url}/like`).send({liked:true})).body.likeCount,1);
+ assert.equal((await a.put(`${url}/like`).send({liked:false})).body.likeCount,0);
+ assert.equal((await a.post(`${url}/comments`).send({text:'   '})).status,400);
+ assert.equal((await a.post(`${url}/comments`).send({text:'x'.repeat(1001)})).status,400);
+ const r=await a.post(`${url}/comments`).send({text:'<script>alert(1)</script> demo discussion'});
+ assert.equal(r.status,201);assert.equal(r.body.comment.text,'<script>alert(1)</script> demo discussion');
+ const id=r.body.comment._id;
+ assert.equal((await b.delete(`/api/v1/course/comments/${id}`)).status,403);
+ assert.equal((await a.delete(`/api/v1/course/comments/${id}`)).status,200);
+ const state=await a.get(`${url}/mine`);assert.equal(state.body.commentCount,0);
+});
+
+test('discovery ranking, pagination, demo exclusion and literal regex search',async()=>{
+ const base='ranking-unique';
+ await Course.insertMany([{courseTitle:`${base} [A]`,category:'Python',isPublished:true,likeCount:10,commentCount:1,isDemo:true},{courseTitle:`${base} B`,category:'Python',isPublished:true,likeCount:1,commentCount:15},{courseTitle:`${base} C`,category:'Python',isPublished:true,likeCount:4,commentCount:3}]);
+ const run=q=>request(app).get(`/api/v1/course/search?query=${base}&${q}`);
+ assert.match((await run('sort=liked')).body.courses[0].courseTitle,/\[A\]/);
+ assert.match((await run('sort=commented')).body.courses[0].courseTitle,/ B/);
+ assert.match((await run('sort=trending')).body.courses[0].courseTitle,/ B/);
+ const page=await run('sort=liked&limit=1&page=2');assert.equal(page.body.courses.length,1);assert.equal(page.body.total,3);
+ assert.equal((await run('demo=hide')).body.total,2);
+ assert.equal((await request(app).get('/api/v1/course/search?query=%5BA%5D')).body.total,1);
+ const row=(await run('sort=liked')).body.courses[0];assert.equal(row.likes,undefined);assert.equal(row.enrolledStudents,undefined);
+});
+
+test('instructor codes bind email, expire, limit attempts and are single-use',async()=>{
+ const {InstructorInvite}=await import('../models/instructorInvite.model.js');
+ const {hashInvite,consumeInstructorInvite}=await import('../controllers/invite.controller.js');
+ const make=(email,code='654321',expiresAt=new Date(Date.now()+60000))=>InstructorInvite.create({email,codeHash:hashInvite(email,code),expiresAt,sentAt:new Date()});
+ await make('one@test.com');
+ assert.equal(await consumeInstructorInvite('other@test.com','654321'),false);
+ assert.equal(await consumeInstructorInvite('one@test.com','000000'),false);
+ assert.equal(await consumeInstructorInvite('one@test.com','654321'),true);
+ assert.equal(await consumeInstructorInvite('one@test.com','654321'),false);
+ await make('expired@test.com','654321',new Date(Date.now()-1000));assert.equal(await consumeInstructorInvite('expired@test.com','654321'),false);
+ await make('attempts@test.com');for(let i=0;i<5;i++)assert.equal(await consumeInstructorInvite('attempts@test.com','000000'),false);
+ assert.equal(await consumeInstructorInvite('attempts@test.com','654321'),false);
+ await make('race@test.com');const results=await Promise.all([consumeInstructorInvite('race@test.com','654321'),consumeInstructorInvite('race@test.com','654321')]);assert.equal(results.filter(Boolean).length,1);
+});
+
+test('invite delivery uses the approved TechLearn sender and text, rejects immediate resend',async()=>{
+ const {requestInstructorInvite}=await import('../controllers/invite.controller.js');const {InstructorInvite}=await import('../models/instructorInvite.model.js');
+ const oldFetch=global.fetch,oldEnabled=process.env.INSTRUCTOR_EMAIL_ENABLED,oldKey=process.env.BREVO_API_KEY;
+ process.env.INSTRUCTOR_EMAIL_ENABLED='true';process.env.BREVO_API_KEY='test-only';let sent;
+ global.fetch=async(url,opts)=>{sent={url,...JSON.parse(opts.body)};return {ok:true};};
+ const call=async(email)=>{let status=200,body;const res={status(n){status=n;return this;},json(v){body=v;return this;}};await requestInstructorInvite({body:{email}},res);return {status,body};};
+ try{assert.equal((await call('invite-test@example.com')).status,200);assert.equal(sent.sender.name,'TechLearn');assert.equal(sent.sender.email,'lakshyayaduvanshi28@gmail.com');assert.equal(sent.subject,'Your TechLearn instructor signup code');assert.match(sent.textContent,/^Your TechLearn instructor signup code is \d{6}\. It expires in 15 minutes and can be used once for this email address\. If you did not request it, ignore this email\.$/);assert.equal((await call('invite-test@example.com')).status,429);const saved=await InstructorInvite.findOne({email:'invite-test@example.com'});assert.match(saved.codeHash,/^[a-f0-9]{64}$/);}
+ finally{global.fetch=oldFetch;if(oldEnabled===undefined)delete process.env.INSTRUCTOR_EMAIL_ENABLED;else process.env.INSTRUCTOR_EMAIL_ENABLED=oldEnabled;if(oldKey===undefined)delete process.env.BREVO_API_KEY;else process.env.BREVO_API_KEY=oldKey;}
+});

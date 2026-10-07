@@ -203,3 +203,35 @@ test('course creator has access without a purchase', async () => {
     assert.equal(res.status, 200);
     assert.equal(res.body.purchased, true, 'creator sees their own course');
 });
+
+test('video upload signing is owner-only and respects provider size cap, not duration', async () => {
+    const {v2: cloudinary} = await import('cloudinary');
+    const originalUsage = cloudinary.api.usage;
+    cloudinary.api.usage = async () => ({media_limits:{video_max_size_bytes:104857600}});
+    process.env.API_SECRET = 'upload-test-secret';
+    process.env.API_KEY = 'upload-test-key';
+    process.env.CLOUD_NAME = 'upload-test-cloud';
+    try {
+        const owner = request.agent(app);
+        await registerUser(owner, {name:'Video Owner',email:'video-owner@test.com',role:'instructor'});
+        const created = await owner.post('/api/v1/course').send({courseTitle:'Video test',category:'Frontend'});
+        const lecture = await owner.post(`/api/v1/course/${created.body.course._id}/lecture`).send({lectureTitle:'Long video'});
+        const id = lecture.body.lecture._id;
+        assert.equal((await request(app).post(`/api/v1/media/video-upload-signature/${id}`).send({size:1})).status,401);
+        const student = request.agent(app);
+        await registerUser(student,{name:'Video Student',email:'video-student@test.com'});
+        assert.equal((await student.post(`/api/v1/media/video-upload-signature/${id}`).send({size:1})).status,403);
+        const other = request.agent(app);
+        await registerUser(other,{name:'Other Instructor',email:'other-video@test.com',role:'instructor'});
+        assert.equal((await other.post(`/api/v1/media/video-upload-signature/${id}`).send({size:1})).status,403);
+        const config = await owner.get(`/api/v1/media/video-upload-config/${id}`);
+        assert.equal(config.body.maxBytes,104857600);
+        const signed = await owner.post(`/api/v1/media/video-upload-signature/${id}`).send({size:41943040,duration:86400});
+        assert.equal(signed.status,200);
+        assert.ok(signed.body.signature);
+        assert.equal(signed.body.apiKey,'upload-test-key');
+        assert.equal(JSON.stringify(signed.body).includes('upload-test-secret'),false);
+        assert.equal((await owner.post(`/api/v1/media/video-upload-signature/${id}`).send({size:104857601})).status,413);
+        assert.equal((await owner.post(`/api/v1/media/video-upload-signature/${id}`).send({size:0})).status,400);
+    } finally {cloudinary.api.usage = originalUsage;}
+});

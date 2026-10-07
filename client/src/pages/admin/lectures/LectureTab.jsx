@@ -11,12 +11,13 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
-const CLOUD_NAME = "dvpaxrfdi";
-const UPLOAD_PRESET = "ml_lectures";
+import { API_BASE_URL } from "@/config/apiConfig";
 
 const CHUNK_SIZE = 6 * 1024 * 1024; // 6MB
 
 const LectureTab = () => {
+    const [uploadLimit, setUploadLimit] = useState(null);
+    const [uploadError, setUploadError] = useState("");
     const [lectureTitle, setLectureTitle] = useState("");
     const [uploadVideoInfo, setUploadVideoInfo] = useState(null);
     const [isFree, setIsFree] = useState(false);
@@ -25,6 +26,11 @@ const LectureTab = () => {
     const [btnDisabled, setBtnDisabled] = useState(true);
     const params = useParams();
     const { courseId, lectureId } = params;
+
+    useEffect(() => {
+        axios.get(`${API_BASE_URL}/api/v1/media/video-upload-config/${lectureId}`, {withCredentials:true})
+            .then(({data}) => setUploadLimit(data.maxBytes)).catch(() => setUploadLimit(null));
+    }, [lectureId]);
 
     const { data: lectureData } = useGetLectureByIdQuery(lectureId);
     const lecture = lectureData?.lecture;
@@ -46,59 +52,57 @@ const LectureTab = () => {
     const [editLecture, { data, isLoading, error, isSuccess }] = useEditLectureMutation();
     const [removeLecture, { data: removeData, isLoading: removeLoading, isSuccess: removeSuccess }] = useRemoveLectureMutation();
 
-    // ✅ Direct chunked upload to Cloudinary — bypasses backend completely
+    // Direct signed chunked upload: no whole-video request or fixed total timeout.
     const fileChangeHandler = async (e) => {
-        const file = e.target.files[0];
+        const file = e.target.files?.[0];
         if (!file) return;
-
-        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-        const uniqueId = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-
+        setUploadError("");
+        if (!file.type.startsWith("video/")) {setUploadError("Choose a video file."); return;}
+        if (uploadLimit && file.size > uploadLimit) {
+            setUploadError(`This account allows ${Math.round(uploadLimit / 1024 / 1024)} MiB per video. Compress the file or split it into lectures.`);
+            e.target.value = "";
+            return;
+        }
         setMediaProgress(true);
         setUploadProgress(0);
-
         try {
-            let lastResponse;
-
-            for (let i = 0; i < totalChunks; i++) {
-                const start = i * CHUNK_SIZE;
-                const end = Math.min(file.size, start + CHUNK_SIZE);
-                const chunk = file.slice(start, end);
-
-                const formData = new FormData();
-                formData.append("file", chunk);
-                formData.append("upload_preset", UPLOAD_PRESET);
-                formData.append("resource_type", "video");
-
-                lastResponse = await axios.post(
-                    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`,
-                    formData,
-                    {
-                        headers: {
-                            "Content-Range": `bytes ${start}-${end - 1}/${file.size}`,
-                            "X-Unique-Upload-Id": uniqueId,
-                        },
-                        onUploadProgress: ({ loaded, total }) => {
-                            const totalProgress = Math.round(
-                                ((i + loaded / total) / totalChunks) * 100
-                            );
-                            setUploadProgress(totalProgress);
-                        },
+            const {data: config} = await axios.post(`${API_BASE_URL}/api/v1/media/video-upload-signature/${lectureId}`, {size:file.size}, {withCredentials:true});
+            setUploadLimit(config.maxBytes);
+            const uploadId = crypto.randomUUID();
+            let result;
+            for (let start = 0; start < file.size; start += CHUNK_SIZE) {
+                const end = Math.min(start + CHUNK_SIZE, file.size);
+                let response;
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    const form = new FormData();
+                    form.append("file", file.slice(start, end), file.name);
+                    for (const [key,value] of Object.entries({api_key:config.apiKey,timestamp:config.timestamp,signature:config.signature,folder:config.folder,public_id:config.public_id,overwrite:"false"})) form.append(key, value);
+                    try {
+                        response = await axios.post(`https://api.cloudinary.com/v1_1/${config.cloudName}/video/upload`, form, {
+                            timeout:120000,
+                            headers:{"Content-Range":`bytes ${start}-${end - 1}/${file.size}`,"X-Unique-Upload-Id":uploadId},
+                            onUploadProgress:({loaded})=>setUploadProgress(Math.min(99,Math.round((start + loaded) / file.size * 100))),
+                        });
+                        break;
+                    } catch (error) {
+                        const status = error.response?.status;
+                        if (attempt === 2 || (status && status < 500 && status !== 429)) throw error;
+                        await new Promise(resolve=>setTimeout(resolve, 1000 * 2 ** attempt));
                     }
-                );
+                }
+                result = response.data;
             }
-
-            const { secure_url, public_id } = lastResponse.data;
-            setUploadVideoInfo({ videoUrl: secure_url, publicId: public_id });
+            if (!result?.secure_url || !result?.public_id) throw new Error("Storage did not confirm the completed upload.");
+            setUploadProgress(100);
+            setUploadVideoInfo({videoUrl:result.secure_url,publicId:result.public_id});
             setBtnDisabled(false);
-            toast.success("Video uploaded successfully!");
-
+            toast.success("Video uploaded. Save changes to attach it to this lecture.");
         } catch (error) {
-            console.error("Upload error:", error.response?.data);
-            toast.error("Video upload failed.");
-        } finally {
-            setMediaProgress(false);
-        }
+            const message = error.response?.data?.message || error.response?.data?.error?.message || error.message || "Video upload failed. Please try again.";
+            setUploadError(message);
+            toast.error(message);
+            e.target.value = "";
+        } finally {setMediaProgress(false);}
     };
 
     const editLectureHandler = async () => {
@@ -162,6 +166,8 @@ const LectureTab = () => {
                         disabled={mediaProgress}
                         className='w-full min-w-0'
                     />
+                    <p className="mt-2 text-sm text-muted-foreground">No duration limit. {uploadLimit ? `Up to ${Math.round(uploadLimit / 1024 / 1024)} MiB per file on the current Cloudinary plan.` : 'The storage limit is checked before upload.'} Long videos may need compression or separate lectures. Keep this page open during upload.</p>
+                    {uploadError && <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">{uploadError}</p>}
                     {uploadVideoInfo?.videoUrl && !mediaProgress && (
                         <p className='text-sm text-green-600 mt-1'>
                             ✅ Video ready: {uploadVideoInfo.videoUrl.split('/').pop()}
@@ -170,7 +176,7 @@ const LectureTab = () => {
                 </div>
                 <div className='flex items-center space-x-2 my-2'>
                     <Switch checked={isFree} onCheckedChange={setIsFree} id="airplane-mode" />
-                    <Label htmlFor="airplane-mode">Is this Video free</Label>
+                    <Label htmlFor="airplane-mode">Allow a free preview</Label>
                 </div>
                 {mediaProgress && (
                     <div className='my-4'>

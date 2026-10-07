@@ -1,11 +1,7 @@
-import Stripe from "stripe";
 import { Course } from "../models/course.model.js";
 import { CoursePurchase } from "../models/coursePurchase.model.js";
 import { User } from "../models/user.model.js";
-import env from "dotenv";
-
-env.config();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import stripe from "../utils/stripe.js";
 
 export const checkOutSession = async (req, res) => {
     try {
@@ -36,6 +32,10 @@ export const checkOutSession = async (req, res) => {
 
         if (user.enrolledCourses && user.enrolledCourses.includes(courseId)) {
             return res.status(400).json({ message: "You are already enrolled in this course" });
+        }
+
+        if (course.creator && course.creator._id.toString() === userId) {
+            return res.status(400).json({ message: "Instructors cannot purchase their own course" });
         }
 
         // Create a new course purchase record
@@ -146,12 +146,11 @@ export const webhookController = async (req, res) => {
             }
             break;
         }
-        case "payment_intent.payment_failed": {
-            const paymentIntent = event.data.object;
-            console.log("Payment failed for session:", paymentIntent.id);
-            // Update purchase status to failed
+        case "checkout.session.expired": {
+            const session = event.data.object;
+            console.log("Checkout session expired:", session.id);
             await CoursePurchase.updateOne(
-                { paymentId: paymentIntent.id },
+                { paymentId: session.id },
                 { status: "failed" }
             );
             break;
@@ -188,16 +187,24 @@ export const verifyPayment = async (req, res) => {
             );
 
             if (purchase) {
-                // Enroll user in the course (GUARANTEED ENROLLMENT)
+                // Only the buyer may verify their own purchase
+                if (purchase.userId.toString() !== userId) {
+                    return res.status(403).json({
+                        success: false,
+                        message: "This purchase belongs to a different user"
+                    });
+                }
+
+                // Enroll the purchase owner (NOT necessarily the caller)
                 const userUpdateResult = await User.findByIdAndUpdate(
-                    userId,
+                    purchase.userId,
                     { $addToSet: { enrolledCourses: purchase.course } },
                     { new: true }
                 );
 
                 const courseUpdateResult = await Course.findByIdAndUpdate(
                     purchase.course,
-                    { $addToSet: { enrolledStudents: userId } }
+                    { $addToSet: { enrolledStudents: purchase.userId } }
                 );
 
                 console.log(`Enrollment updated - User: ${userUpdateResult ? 'Success' : 'Failed'}, Course: ${courseUpdateResult ? 'Success' : 'Failed'}`);
@@ -251,7 +258,7 @@ export const getCourseDetailWithPurchaseStatus = async (req, res) => {
         // Otherwise, check if they have purchased the course
         let purchased = isCreator;
         if (!purchased) {
-            const purchaseRecord = await CoursePurchase.findOne({ course: courseId, userId });
+            const purchaseRecord = await CoursePurchase.findOne({ course: courseId, userId, status: "completed" });
             purchased = !!purchaseRecord;
         }
 

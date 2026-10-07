@@ -5,25 +5,31 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon server/index.js",
-    "build":"npm install && npm install --prefix client && npm run build --prefix client",
-    "start": "nodemon server/index.js"
+    "dev": "node --watch server/index.js",
+    "build": "npm install && npm install --prefix client && npm run build --prefix client",
+    "start": "node server/index.js",
+    "test": "node --test \"server/tests/**/*.test.js\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "cloudinary": "^1.41.3",
+    "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.2.0",
-    "multer": "^2.1.1",
-    "multer-storage-cloudinary": "^4.0.0",
-    "nodemon": "^3.1.11",
+    "mongoose": "^9.11.0",
+    "multer": "^2.4.0",
+    "sanitize-html": "^2.18.0",
     "stripe": "^21.0.1"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.3.0",
+    "supertest": "^7.3.1"
   }
 }

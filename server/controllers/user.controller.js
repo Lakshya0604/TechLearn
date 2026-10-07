@@ -8,13 +8,24 @@ import { uploadToCloudinary, deleteMediaFromCloudinary } from '../utils/cloudina
 // User registration controller
 export const register = async (req, res) => {
     try {
-        let { name, email, password, role } = req.body;
+        let { name, email, password, role, inviteCode } = req.body;
 
-        email = email.toLowerCase().trim();
-        password = password.trim();
+        email = email?.toLowerCase().trim();
+        password = password?.trim();
         role = role?.replace(/"/g, "").trim();
         if (!name || !email || !password) {
             return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        // Role is whitelisted: nobody can register as anything but student/instructor,
+        // and instructor signup requires the invite code when one is configured.
+        if (role === "instructor") {
+            const configuredCode = process.env.INSTRUCTOR_INVITE_CODE;
+            if (configuredCode && inviteCode !== configuredCode) {
+                return res.status(403).json({ success: false, message: "A valid instructor invite code is required" });
+            }
+        } else {
+            role = "student";
         }
 
         // Check if user already exists
@@ -29,7 +40,7 @@ export const register = async (req, res) => {
             name,
             email,
             password: hashedPassword,
-            role: role || "student"
+            role
         });
 
         // Generate token for the new user

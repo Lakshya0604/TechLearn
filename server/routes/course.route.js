@@ -1,5 +1,8 @@
 import express from "express";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
+import requireInstructor from "../middlewares/requireInstructor.js";
+import requireCourseOwner from "../middlewares/requireCourseOwner.js";
+import requireLectureOwner from "../middlewares/requireLectureOwner.js";
 import {
     createCourse,
     createLecture,
@@ -19,30 +22,29 @@ import upload from "../utils/multer.js";
 
 const router = express.Router();
 
-// ✅ 1. Static routes FIRST (before any dynamic /:param routes)
-router.route("/").post(isAuthenticated, createCourse);
+// Static routes FIRST (before any dynamic /:param routes)
+router.route("/").post(isAuthenticated, requireInstructor, createCourse);
 router.route("/").get(isAuthenticated, getCreatorCourses);
 router.route("/search").get(isAuthenticated, searchCourse);
 router.route("/published-courses").get(getPublishedCourses);
-router.route("/:courseId").delete(isAuthenticated, deleteCourse);
+router.route("/:courseId").delete(isAuthenticated, requireCourseOwner, deleteCourse);
 
-// ✅ 2. Static-prefixed lecture route BEFORE /:courseId
-//    Without this, Express matches "lecture" as a :courseId value
+// Static-prefixed lecture route BEFORE /:courseId
 router.route("/lecture/:lectureId")
-    .get(isAuthenticated, getlectureById)
-    .delete(isAuthenticated, removeLecture);
+    .get(isAuthenticated, requireLectureOwner, getlectureById)
+    .delete(isAuthenticated, requireLectureOwner, removeLecture);
 
-// ✅ 3. Dynamic :courseId routes AFTER all static routes
+// Dynamic :courseId routes AFTER all static routes
 router.route("/:courseId")
     .get(isAuthenticated, getCourseById)
-    .put(isAuthenticated, upload.single("courseThumbnail"), editCourse)
-    .patch(isAuthenticated, togglePublishCourse);   // ✅ Chained, not separate
+    .put(isAuthenticated, requireCourseOwner, upload.single("courseThumbnail"), editCourse)
+    .patch(isAuthenticated, requireCourseOwner, togglePublishCourse);
 
 router.route("/:courseId/lecture")
-    .post(isAuthenticated, createLecture)
-    .get(isAuthenticated, getCourseLecture);        // ✅ Chained, not separate
+    .post(isAuthenticated, requireCourseOwner, createLecture)
+    .get(isAuthenticated, requireCourseOwner, getCourseLecture);
 
 router.route("/:courseId/lecture/:lectureId")
-    .put(isAuthenticated, editLecture);
+    .put(isAuthenticated, requireCourseOwner, editLecture);
 
 export default router;

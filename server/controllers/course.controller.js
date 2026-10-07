@@ -6,6 +6,19 @@ import {
     deleteVideoFromCloudinary,
     uploadToCloudinary,
 } from "../utils/cloudinary.js";
+import sanitizeHtml from "sanitize-html";
+
+// Course descriptions are rendered as HTML in the client, so strip
+// anything beyond basic formatting before storing them.
+const sanitizeDescription = (html) =>
+    sanitizeHtml(html, {
+        allowedTags: [
+            "h1", "h2", "h3", "h4", "h5", "h6", "p", "a", "ul", "ol", "li",
+            "b", "strong", "i", "em", "u", "s", "blockquote", "code", "pre", "br", "span",
+        ],
+        allowedAttributes: { a: ["href", "target", "rel"] },
+        allowedSchemes: ["http", "https", "mailto"],
+    });
 
 
 // ============================
@@ -178,7 +191,7 @@ export const editCourse = async (req, res) => {
         const updateData = {
             ...(courseTitle && { courseTitle }),
             ...(subTitle && { subTitle }),
-            ...(description && { description }),
+            ...(description && { description: sanitizeDescription(description) }),
             ...(category && { category }),
             ...(courseLevel && { courseLevel }),
             ...(coursePrice && { coursePrice }),

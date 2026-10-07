@@ -18,7 +18,8 @@ export default function Login() {
     name: "",
     email: "",
     password: "",
-    role: "student"
+    role: "student",
+    inviteCode: ""
   });
 
   const [loginInput, setLoginInput] = useState({
@@ -265,6 +266,20 @@ export default function Login() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {signupInput.role === "instructor" && (
+                <div className="space-y-1">
+                  <Label htmlFor="signup-invite-code">Instructor invite code</Label>
+                  <Input
+                    id="signup-invite-code"
+                    type="text"
+                    name="inviteCode"
+                    value={signupInput.inviteCode}
+                    placeholder="Required for instructor accounts"
+                    onChange={(e) => changeInputHandler(e, "signup")}
+                  />
+                </div>
+              )}
 
               <Button
                 disabled={isRegisterLoading}

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Clock, Star, Users, PlayCircle } from "lucide-react";
+import { Clock, Star, Users, PlayCircle, BookOpen } from "lucide-react";
 
 const Course = ({ course }) => {
     const instructorName = course?.creator?.name || "Instructor";
@@ -22,7 +22,7 @@ const Course = ({ course }) => {
                         src={thumbnail}
                         alt={course?.courseTitle}
                         className="w-full aspect-video object-cover transform group-hover:scale-105 transition-transform duration-500"
-                    /> : <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-indigo-100 to-blue-50 dark:from-indigo-950 dark:to-slate-900"><PlayCircle className="h-12 w-12 text-indigo-400" /></div>}
+                    /> : <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-indigo-100 to-blue-50 dark:from-indigo-950 dark:to-slate-900">{course.isDemo?<div className="text-center"><BookOpen className="mx-auto h-10 w-10 text-indigo-400"/><p className="mt-3 text-xs font-medium uppercase tracking-widest text-indigo-500">{course.category} · Written lessons</p></div>:<PlayCircle className="h-12 w-12 text-indigo-400"/>}</div>}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
                         <div className="bg-white/90 dark:bg-gray-800/90 rounded-full p-2">
                             <PlayCircle className="w-6 h-6 text-blue-600" />
@@ -35,6 +35,7 @@ const Course = ({ course }) => {
                     </div>
                 </div>
 
+                {course.isDemo && <div className="border-b bg-amber-50 px-4 py-2 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">Demo course · synthetic teacher and activity</div>}
                 {/* Content Section */}
                 <div className="flex-1 p-4 flex flex-col">
                     {/* Course Title */}
@@ -67,6 +68,7 @@ const Course = ({ course }) => {
                         </div>
                     </div>
 
+                    <p className="mb-3 text-xs text-muted-foreground">{course.likeCount || 0} likes · {course.commentCount || 0} comments · {course.enrollmentCount ?? course.enrolledStudents?.length ?? 0} enrolled{course.isDemo ? ' (demo)' : ''}</p>
                     {/* Footer Section */}
                     <div className="mt-auto flex items-center justify-between pt-2">
                         <div className="flex items-center gap-2">

@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 const lectureSchema = new mongoose.Schema({
+    isDemo: {type:Boolean,default:false},
+    content: {type:String},
     lectureTitle: {
         type: String,
         required: true,

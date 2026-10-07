@@ -57,73 +57,23 @@ export const createCourse = async (req, res) => {
 // GET ALL COURSES
 // ============================
 
-export const searchCourse = async (req, res) => {
+export const searchCourse = async (req,res) => {
     try {
-        const { query = "", categories = "", sortByPrice = "" } = req.query;
+        const {query='',categories='',sortByPrice='',sort='trending',page=1,limit=12,demo='all'}=req.query;
+        const escaped=String(query).slice(0,120).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        const match={isPublished:true,$or:[{courseTitle:{$regex:escaped,$options:'i'}},{subTitle:{$regex:escaped,$options:'i'}},{category:{$regex:escaped,$options:'i'}}]};
+        const cats=String(categories).split(',').filter(Boolean);
+        if(cats.length)match.category={$in:cats};
+        if(demo==='hide')match.isDemo={$ne:true};
+        const perPage=Math.min(24,Math.max(1,Math.floor(Number(limit))||12));const currentPage=Math.min(100000,Math.max(1,Math.floor(Number(page))||1));
+        const sorting=sortByPrice==='low'?{coursePrice:1,_id:1}:sortByPrice==='high'?{coursePrice:-1,_id:1}:sort==='liked'?{likeCount:-1,_id:1}:sort==='commented'?{commentCount:-1,_id:1}:sort==='newest'?{createdAt:-1,_id:1}:{trendScore:-1,_id:1};
+        const rows=await Course.aggregate([{$match:match},{$addFields:{trendScore:{$add:[{$multiply:[{$ifNull:['$likeCount',0]},3]},{$multiply:[{$ifNull:['$commentCount',0]},2]},{$size:{$ifNull:['$enrolledStudents',[]]}}]},enrollmentCount:{$size:{$ifNull:['$enrolledStudents',[]]}}}},{$sort:sorting},{$skip:(currentPage-1)*perPage},{$limit:perPage},{$project:{likes:0,enrolledStudents:0,description:0,lectures:0}}]);
+        await Course.populate(rows,{path:'creator',select:'name photoUrl isDemo teachingTopic'});
+        res.json({courses:rows,total:await Course.countDocuments(match),page:currentPage,limit:perPage});
+    }catch(error){console.error(error);res.status(500).json({message:'Could not load courses'});}
+};
+export const getPublishedCourses = searchCourse;
 
-        // Parse categories - handle both array and comma-separated string
-        const categoriesArray = categories ? (Array.isArray(categories) ? categories : categories.split(',').filter(c => c.trim())) : [];
-
-        //create search query
-        const searchCriteria = {
-            isPublished: true,
-            $or: [
-                { courseTitle: { $regex: query, $options: "i" } },
-                { subTitle: { $regex: query, $options: "i" } },
-                { category: { $regex: query, $options: "i" } },
-            ]
-        };
-
-        //if category is selected - add as separate condition (not overriding $or)
-        if (categoriesArray.length > 0) {
-            searchCriteria.$and = searchCriteria.$and || [];
-            searchCriteria.$and.push({ category: { $in: categoriesArray } });
-        }
-        //define sorting
-        const sortOptions = {};
-        if (sortByPrice === "low") {
-            sortOptions.coursePrice = 1; //sort by price in ascending order
-        } else if (sortByPrice === "high") {
-            sortOptions.coursePrice = -1; //sort by price in descending order
-        }
-
-        let courses = await Course.find(searchCriteria).populate({ path: "creator", select: "name photoUrl" }).sort(sortOptions);
-
-        return res.status(200).json({
-            success: true,
-            courses: courses || []
-        });
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            message: "Failed to search course",
-        });
-    }
-}
-
-
-
-export const getPublishedCourses = async (req, res) => {
-    try {
-        const courses = await Course.find({ isPublished: true }).populate({ path: "creator", select: "name photoUrl" });
-        if (!courses) {
-            return res.status(404).json({
-                message: "No courses found",
-            });
-        }
-        return res.status(200).json({
-            courses,
-        });
-
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            message: "Failed to fetch courses",
-        });
-    }
-
-}
 export const getCreatorCourses = async (req, res) => {
     try {
         const userId = req.id;

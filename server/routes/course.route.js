@@ -25,7 +25,7 @@ const router = express.Router();
 // Static routes FIRST (before any dynamic /:param routes)
 router.route("/").post(isAuthenticated, requireInstructor, createCourse);
 router.route("/").get(isAuthenticated, getCreatorCourses);
-router.route("/search").get(isAuthenticated, searchCourse);
+router.route("/search").get(searchCourse);
 router.route("/published-courses").get(getPublishedCourses);
 router.route("/:courseId").delete(isAuthenticated, requireCourseOwner, deleteCourse);
 

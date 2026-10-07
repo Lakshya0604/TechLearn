@@ -6,26 +6,10 @@ import React, { useState } from 'react'
 
 
 const categories = [
-    { id: "nextjs", label: "Next.js" },
-    { id: "react", label: "React" },
-    { id: "nodejs", label: "Node.js" },
-    { id: "mongodb", label: "MongoDB" },
-    { id: "express", label: "Express.js" },
-    { id: "javascript", label: "JavaScript" },
-    { id: "typescript", label: "TypeScript" },
-    { id: "python", label: "Python" },
-    { id: "java", label: "Java" },
-    { id: "csharp", label: "C#" },
-    { id: "html", label: "HTML" },
-    { id: "css", label: "CSS" },
-    { id: "tailwind", label: "Tailwind CSS" },
-    { id: "bootstrap", label: "Bootstrap" },
-    { id: "redux", label: "Redux" },
-    { id: "graphql", label: "GraphQL" },
-    { id: "docker", label: "Docker" },
-    { id: "kubernetes", label: "Kubernetes" },
-    { id: "aws", label: "AWS" },
-    { id: "git", label: "Git & GitHub" }
+    {id:"Next JS",label:"Next.js"}, {id:"Data Science",label:"Data science"},
+    {id:"AI",label:"AI"}, {id:"Frontend",label:"Frontend"}, {id:"Backend",label:"Backend"},
+    {id:"Python",label:"Python"}, {id:"MongoDB",label:"MongoDB"},
+    {id:"Docker",label:"Docker"}, {id:"Java Script",label:"JavaScript"}
 ];
 
 const Filter = ({ handleFilterChange }) => {

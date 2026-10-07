@@ -1,12 +1,15 @@
 import React from "react";
+import PageState from "@/components/PageState";
 import Course from "./Course";
 import { useLoadUserQuery } from "@/features/api/authApi";
 import { BookOpen, GraduationCap, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const MyLearning = () => {
-    const { data, isLoading } = useLoadUserQuery();
-    const myLearningCourses = data?.user.enrolledCourses || [];
+    const { data, isLoading, isError, refetch } = useLoadUserQuery();
+    const myLearningCourses = data?.user?.enrolledCourses || [];
+
+    if (isError) return <div className="mx-auto max-w-4xl p-6"><PageState error title="Your learning couldn't load" description="Please try again in a moment." onRetry={refetch} /></div>;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-8 px-4 sm:px-6 lg:px-8">
@@ -75,7 +78,7 @@ const EmptyState = () => (
             You haven't enrolled in any courses yet. Explore our catalog and find the perfect course to begin your learning adventure.
         </p>
         <Link
-            to="/courses"
+            to="/course/search"
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
         >
             Explore Courses

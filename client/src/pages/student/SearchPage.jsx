@@ -1,87 +1,20 @@
-import Filter from './Filter'
-import React, { useState } from 'react'
-import SearchResult from './SearchResult';
+import Filter from './Filter';
+import { useState } from 'react';
+import Course from './Course';
+import PageState from '@/components/PageState';
 import { useGetSearchCourseQuery } from '@/features/api/courseApi';
 import { useSearchParams } from 'react-router-dom';
-
-const SearchPage = () => {
-    const [searchParams] = useSearchParams();
-    const query = searchParams.get("query");
-    const [selectedCategories, setSelectedCategories] = useState([]);
-    const [shortByPrice, setShortByPrice] = useState("");
-    const { data, isLoading } = useGetSearchCourseQuery({
-        searchQuery: query,
-        categories: selectedCategories,
-        shortByPrice
-    });
-
-    const isEmpty = !isLoading && data?.courses.length === 0;
-
-    const handleFilterChange = (categories, price) => {
-        setSelectedCategories(categories);
-        setShortByPrice(price);
-    }
-    return (
-        <div className='max-w-7xl mx-auto p-4 mt-3 md:p-8'>
-            <div className='my-6'>
-                <h1 className='font-bold text-xl md:text-2xl'>Result for "{query}"</h1>
-                <p>
-                    Showing results for {""}
-                    <span className='text-blue-800 font-bold italic'>{query}</span>
-                </p>
-            </div>
-            <div className='flex flex-col md:flex-row gap-10'>
-                <Filter handleFilterChange={handleFilterChange} />
-                <div className='flex-1'>
-                    {
-                        isLoading ? (
-                            Array.from({ length: 3 }).map((_, idx) => (
-                                <CourseSkeleton key={idx} />)
-                            )) : isEmpty ? (<CourseNotFound />) : (
-                                data?.courses?.map((course) => (
-                                    <SearchResult key={course._id} course={course} />
-                                ))
-                            )
-
-                    }
-                </div>
-            </div>
-        </div>
-    );
-};
-
-export default SearchPage
-
-const CourseSkeleton = () => {
-    return (
-        <div className="flex gap-4 mb-6 animate-pulse">
-            {/* Thumbnail */}
-            <div className="w-40 h-24 bg-gray-300 rounded-lg"></div>
-
-            {/* Content */}
-            <div className="flex flex-col flex-1 gap-2">
-                <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-                <div className="h-3 bg-gray-300 rounded w-1/3"></div>
-
-                <div className="flex gap-2 mt-2">
-                    <div className="h-6 w-16 bg-gray-300 rounded"></div>
-                    <div className="h-6 w-20 bg-gray-300 rounded"></div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const CourseNotFound = () => {
-    return (
-        <div className="text-center py-10">
-            <h2 className="text-xl font-semibold text-gray-700">
-                No courses found
-            </h2>
-            <p className="text-gray-500 mt-2">
-                Try searching with different keywords.
-            </p>
-        </div>
-    );
-};
+import { Search } from 'lucide-react';
+export default function SearchPage() {
+  const [params, setParams] = useSearchParams();
+  const query = params.get('query') || '';
+  const [input, setInput] = useState(query);
+  const [categories, setCategories] = useState([]);
+  const [price, setPrice] = useState('');
+  const {data, isLoading, isError, refetch} = useGetSearchCourseQuery({searchQuery:query,categories,shortByPrice:price});
+  return <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
+    <h1 className="text-3xl font-semibold tracking-tight">{query ? `Results for "${query}"` : 'Browse courses'}</h1><p className="mt-2 text-muted-foreground">Find a topic that sparks your next idea.</p>
+    <form onSubmit={e => {e.preventDefault();setParams({query:input.trim()});}} className="my-7 flex max-w-xl items-center gap-3 rounded-xl border bg-card p-2"><Search size={20} className="ml-2 shrink-0 text-muted-foreground" /><input aria-label="Search courses" type="search" value={input} onChange={e=>setInput(e.target.value)} className="min-w-0 flex-1 bg-transparent py-2 outline-none" placeholder="Search by course or topic" /><button className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Search</button></form>
+    <div className="flex flex-col gap-8 md:flex-row"><Filter handleFilterChange={(c,p)=>{setCategories(c);setPrice(p);}} /><div className="min-w-0 flex-1">{isLoading ? <PageState loading title="Finding your next course" /> : isError ? <PageState error title="Search couldn't load" description="Check your connection and try again." onRetry={refetch} /> : !data?.courses?.length ? <PageState title="No courses found" description="Try a different keyword or remove a filter." /> : <><p className="mb-4 text-sm text-muted-foreground">{data.courses.length} {data.courses.length === 1 ? 'course' : 'courses'}</p><div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">{data.courses.map(course=><Course key={course._id} course={course} />)}</div></>}</div></div>
+  </div>;
+}

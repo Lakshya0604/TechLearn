@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ const AddCourse = () => {
     }
 
     const createCourseHandler = async () => {
+        if (!courseTitle.trim() || !category) return toast.error("Add a title and select a category");
         await createCourse({ courseTitle, category });
 
     };
@@ -27,6 +29,7 @@ const AddCourse = () => {
     //for display message toast
 
     useEffect(() => {
+        if (error) toast.error(error?.data?.message || "Could not create course");
         if (isSuccess) {
             toast.success(data?.message || "course created")
             navigate("/admin/course");
@@ -35,19 +38,19 @@ const AddCourse = () => {
 
     }, [isSuccess, error])
     return (
-        <div className='flex-1 mx-10'>
+        <div className='max-w-2xl rounded-2xl border bg-card p-5 sm:p-8'>
             <div className='mb-4'>
                 <h1 className='font-bold text-xl'>
-                    lets, add course and some course deailes for your new course
+                    Create a new course
                 </h1>
 
 
             </div>
             <div className='space-y-4'>
                 <div className='gap-4'>
-                    <Label>Title</Label>
-                    <br></br>
-                    <input type="text" value={courseTitle} onChange={(e) => setCourseTitle(e.target.value)} placeholder='Your Course Name' />
+                    <Label htmlFor="course-title">Course title</Label>
+
+                    <Input id="course-title" className="mt-2" type="text" value={courseTitle} onChange={(e) => setCourseTitle(e.target.value)} placeholder='Your Course Name' />
                 </div>
                 <div>
                     <Label>
@@ -81,7 +84,7 @@ const AddCourse = () => {
                                 <>
                                     <Loader2 className='mr-2 h-4 w-4 animate-spin' />Please wait
                                 </>
-                            ) : "create"
+                            ) : "Create course"
 
                         }
                     </Button>

@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import React from "react";
+import React, { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -8,18 +8,21 @@ import { Clock, Star, Users, PlayCircle } from "lucide-react";
 const Course = ({ course }) => {
     const instructorName = course?.creator?.name || "Instructor";
     const instructorPhoto = course?.creator?.photoUrl || "";
-    const thumbnail = course?.courseThumbnail || "https://via.placeholder.com/400x200?text=No+Image";
+    const [imageFailed, setImageFailed] = useState(false);
+    const thumbnail = !imageFailed && course?.courseThumbnail;
 
     return (
         <Link to={`/course-detail/${course?._id}`}>
             <Card className="group h-full flex flex-col bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden">
                 {/* Thumbnail Section */}
                 <div className="relative overflow-hidden">
-                    <img
+                    {thumbnail ? <img
+                        loading="lazy"
+                        onError={() => setImageFailed(true)}
                         src={thumbnail}
                         alt={course?.courseTitle}
-                        className="w-full h-44 object-cover transform group-hover:scale-105 transition-transform duration-500"
-                    />
+                        className="w-full aspect-video object-cover transform group-hover:scale-105 transition-transform duration-500"
+                    /> : <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-indigo-100 to-blue-50 dark:from-indigo-950 dark:to-slate-900"><PlayCircle className="h-12 w-12 text-indigo-400" /></div>}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
                         <div className="bg-white/90 dark:bg-gray-800/90 rounded-full p-2">
                             <PlayCircle className="w-6 h-6 text-blue-600" />
@@ -68,12 +71,12 @@ const Course = ({ course }) => {
                     <div className="mt-auto flex items-center justify-between pt-2">
                         <div className="flex items-center gap-2">
                             <span className={`text-lg font-bold ${course?.coursePrice === 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'}`}>
-                                {course?.coursePrice === 0 ? "Free" : `₹${course?.coursePrice}`}
+                                {course?.coursePrice === 0 ? "Free" : `₹${Number(course?.coursePrice || 0).toLocaleString("en-IN")}`}
                             </span>
                         </div>
-                        <button className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg">
+                        <span className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg">
                             View Course
-                        </button>
+                        </span>
                     </div>
                 </div>
             </Card>

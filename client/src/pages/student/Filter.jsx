@@ -47,16 +47,16 @@ const Filter = ({ handleFilterChange }) => {
     }
 
     return (
-        <div className='w-full md:w-[20%]'>
-            <div className='flex items-center justify-between'>
+        <div className='w-full md:w-56 md:shrink-0 rounded-xl border bg-card p-4'>
+            <div className='flex flex-col gap-3'>
                 <h1 className='font-semibold text-lg md:text-xl'>Filter options </h1>
                 <Select onValueChange={selectByPriceHandler}>
                     <SelectTrigger>
-                        <SelectValue placeholder="Short By" />
+                        <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectGroup>
-                            <SelectLabel>Short By Price</SelectLabel>
+                            <SelectLabel>Sort by Price</SelectLabel>
                             <SelectItem value="low">Low to High</SelectItem>
                             <SelectItem value="high">High to Low</SelectItem>
                         </SelectGroup>
@@ -69,9 +69,9 @@ const Filter = ({ handleFilterChange }) => {
                 <h1 className='font-semibold mb-2'>Category</h1>
                 {
                     categories.map((category) => (
-                        <div className='flex items-center space-x-2 my-2'>
+                        <div key={category.id} className='flex items-center space-x-2 my-3'>
                             <Checkbox id={category.id} onCheckedChange={() => handleCategoryChange(category.id)} />
-                            <Label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            <Label htmlFor={category.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                                 {category.label}
                             </Label>
                         </div>

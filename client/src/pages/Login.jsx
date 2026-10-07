@@ -8,7 +8,7 @@ import { useLoginUserMutation, useRegisterUserMutation } from "@/features/api/au
 import { useState, useEffect } from "react"
 import { Loader2, User, Mail, Lock } from "lucide-react"
 import { toast } from "sonner"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { useDispatch } from "react-redux"
 import { userLoggedIn } from "@/features/authSlice"
 
@@ -38,6 +38,7 @@ export default function Login() {
   ] = useLoginUserMutation();
 
   const navigate = useNavigate();
+  const [params] = useSearchParams();
 
   // State update handler for input fields
   const changeInputHandler = (e, type) => {
@@ -124,8 +125,8 @@ export default function Login() {
   ]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted dark:bg-gray-950">
-      <Tabs defaultValue="login" className="w-full max-w-md">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-muted/40 px-5 py-12">
+      <Tabs defaultValue={params.get("tab") === "signup" ? "signup" : "login"} className="w-full max-w-md">
 
         <TabsList className="grid grid-cols-2 mb-4">
           <TabsTrigger value="login">Login</TabsTrigger>
@@ -138,17 +139,18 @@ export default function Login() {
             <CardHeader>
               <CardTitle>Welcome back</CardTitle>
               <CardDescription>
-                Enter your credentials to login
+                Pick up where you left off.
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent><form className="space-y-4" onSubmit={e => {e.preventDefault();handleRegistration("login");}}>
               <div className="space-y-1">
                 <Label htmlFor="login-email">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="login-email"
+                    required autoComplete="email"
                     type="email"
                     name="email"
                     value={loginInput.email}
@@ -165,6 +167,7 @@ export default function Login() {
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="login-password"
+                    required autoComplete="current-password"
                     type="password"
                     name="password"
                     value={loginInput.password}
@@ -175,9 +178,10 @@ export default function Login() {
                 </div>
               </div>
 
+              {loginError && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{loginError.data?.message || "Could not sign in. Please try again."}</p>}
               <Button
                 disabled={isLoginLoading}
-                onClick={() => handleRegistration("login")}
+                type="submit"
                 className="w-full"
               >
                 {
@@ -189,7 +193,7 @@ export default function Login() {
                   ) : "Login"
                 }
               </Button>
-            </CardContent>
+            </form></CardContent>
           </Card>
         </TabsContent>
 
@@ -203,14 +207,15 @@ export default function Login() {
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent><form className="space-y-4" onSubmit={e => {e.preventDefault();handleRegistration("signup");}}>
               <div className="space-y-1">
                 <Label htmlFor="signup-name">Full Name</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="signup-name"
-                    placeholder="John Doe"
+                    required autoComplete="name"
+                    placeholder="Your full name"
                     name="name"
                     value={signupInput.name}
                     onChange={(e) => changeInputHandler(e, "signup")}
@@ -225,6 +230,7 @@ export default function Login() {
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="signup-email"
+                    required autoComplete="email"
                     type="email"
                     name="email"
                     value={signupInput.email}
@@ -241,6 +247,7 @@ export default function Login() {
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="signup-password"
+                    required autoComplete="new-password"
                     type="password"
                     name="password"
                     value={signupInput.password}
@@ -272,6 +279,7 @@ export default function Login() {
                   <Label htmlFor="signup-invite-code">Instructor invite code</Label>
                   <Input
                     id="signup-invite-code"
+                    required autoComplete="off"
                     type="text"
                     name="inviteCode"
                     value={signupInput.inviteCode}
@@ -281,9 +289,10 @@ export default function Login() {
                 </div>
               )}
 
+              {registerError && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{registerError.data?.message || "Could not create account. Please try again."}</p>}
               <Button
                 disabled={isRegisterLoading}
-                onClick={() => handleRegistration("signup")}
+                type="submit"
                 className="w-full"
               >
                 {
@@ -295,7 +304,7 @@ export default function Login() {
                   ) : "Create Account"
                 }
               </Button>
-            </CardContent>
+            </form></CardContent>
           </Card>
         </TabsContent>
 

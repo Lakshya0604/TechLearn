@@ -1,4 +1,5 @@
 import React from 'react';
+import PageState from '@/components/PageState';
 import { useNavigate } from 'react-router-dom';
 import { Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,11 +24,12 @@ import {
 const CourseTable = () => {
     const navigate = useNavigate();
 
-    const { data, isLoading } = useGetCreatorCourseQuery();
+    const { data, isLoading, isError, refetch } = useGetCreatorCourseQuery();
     const [deleteCourse, { isLoading: isDeleting }] =
         useDeleteCourseMutation();
 
     const handleDelete = async (courseId) => {
+        if (!window.confirm("Delete this course? This cannot be undone.")) return;
         try {
             const response = await deleteCourse(courseId).unwrap();
 
@@ -44,9 +46,10 @@ const CourseTable = () => {
     };
 
     if (isLoading) {
-        return <h1>Loading...</h1>;
+        return <PageState loading title="Loading your courses" />;
     }
 
+    if (isError) return <PageState error title="Your courses couldn't load" onRetry={refetch} />;
     return (
         <div>
             <Button onClick={() => navigate('create')}>
@@ -76,7 +79,7 @@ const CourseTable = () => {
                         data.courses.map((course) => (
                             <TableRow key={course._id}>
                                 <TableCell className="font-medium">
-                                    {course.coursePrice || 'NA'}
+                                    {course.coursePrice == null ? "Not set" : `₹${course.coursePrice}`}
                                 </TableCell>
 
                                 <TableCell>
@@ -95,6 +98,7 @@ const CourseTable = () => {
                                     <div className="flex justify-end gap-2">
                                         <Button
                                             size="sm"
+                                            aria-label={`Edit ${course.courseTitle}`}
                                             variant="ghost"
                                             onClick={() =>
                                                 navigate(`${course._id}`)
@@ -105,6 +109,7 @@ const CourseTable = () => {
 
                                         <Button
                                             size="sm"
+                                            aria-label={`Delete ${course.courseTitle}`}
                                             variant="destructive"
                                             disabled={isDeleting}
                                             onClick={() =>

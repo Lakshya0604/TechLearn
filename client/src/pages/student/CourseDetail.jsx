@@ -1,3 +1,4 @@
+import PageState from '@/components/PageState';
 import BuyCourseButton from '@/components/BuyCourseButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,19 +11,19 @@ import { useNavigate, useParams } from 'react-router-dom';
 const CourseDetail = () => {
     const params = useParams();
     const courseId = params.courseId;
-    const { data, isLoading, isError } = useGetCourseDetailWithStatusQuery(courseId);
+    const { data, isLoading, isError, refetch } = useGetCourseDetailWithStatusQuery(courseId);
     const navigate = useNavigate();
     if (isLoading) {
-        return <h1>Loading...</h1>;
+        return <div className="mx-auto max-w-5xl p-6"><PageState loading title="Loading course details" /></div>;
     }
     if (isError) {
-        return <h1>Error loading course details</h1>;
+        return <div className="mx-auto max-w-5xl p-6"><PageState error title="Course details couldn't load" onRetry={refetch} /></div>;
     }
 
     const { course, purchased } = data || {};
 
     if (!course) {
-        return <h1>Course not found</h1>;
+        return <div className="mx-auto max-w-5xl p-6"><PageState title="Course not found" description="It may no longer be available." /></div>;
     }
 
 
@@ -32,7 +33,7 @@ const CourseDetail = () => {
 
 
     return (
-        <div className='mt-20 space-y-5'>
+        <div className='space-y-5 pb-12'>
             <div className='bg-[#2D2F31] text-white '>
                 <div className='max-w-7xl mx-auto py-8 px-4 md:px-8 flex flex-col gap-2 '>
                     <h1 className='font-bold text-2xl md:text-3xl'>
@@ -42,13 +43,13 @@ const CourseDetail = () => {
                         {course?.subTitle || course?.description?.substring(0, 100)}
                     </p>
                     <p>
-                        Created By{""} <span className='text-orange-500 underline italic   text-sm md:text-base'> {course.creator?.name || 'Unknown'}</span>
+                        Created by{""} <span className='text-orange-500 underline italic   text-sm md:text-base'> {course.creator?.name || 'Unknown'}</span>
                     </p>
                     <div className='flex items-center gap-2 text-sm'>
                         <BadgeInfo size='16' />
-                        <p>Last updated: {course?.createdAt.split("T")[0]}</p>
+                        <p>Last updated: {course?.updatedAt?.split("T")[0] || course?.createdAt?.split("T")[0]}</p>
                     </div>
-                    <p>Student Enrolled : {course?.enrolledStudents.length}</p>
+                    <p>Students enrolled: {course?.enrolledStudents?.length || 0}</p>
                 </div>
             </div>
             <div className='max-w-7xl mx-auto my-5 px-4 md:px-8 flex flex-col lg:flex-row justify-between gap-4'>
@@ -63,10 +64,10 @@ const CourseDetail = () => {
                         <CardContent className='space-y-3'>
                             {
                                 course.lectures?.map((lecture) => (
-                                    <div key={lecture._id} className='p-4 bg-gray-100 rounded-lg'>
+                                    <div key={lecture._id} className='flex items-center gap-3 p-4 bg-muted rounded-lg'>
                                         <span>
                                             {
-                                                true ? (<PlayCircle />) : <Lock size='16' />
+                                                lecture.isPreviewFree || purchased ? (<PlayCircle />) : <Lock size='16' />
                                             }
                                         </span>
                                         <p>{lecture.lectureTitle}</p>
@@ -89,16 +90,16 @@ const CourseDetail = () => {
                                             />
                                         </video>
                                     ) : (
-                                        <div className='text-muted-foreground'>Video Not Upload
-                                            <Video size='48' className='mx-auto mt-20' />
+                                        <div className='text-muted-foreground'>Course preview not available
+                                            <Video size='48' className='mx-auto mt-4' />
 
                                         </div>
                                     )
                                 }
-                            </div><h1>Course Title : <span className='text-orange-500 text-lg font-semibold'>{course.courseTitle}</span></h1>
+                            </div><h1>Course title: <span className='text-orange-500 text-lg font-semibold'>{course.courseTitle}</span></h1>
 
                             <Separator className='my-2' />
-                            <h1 className='text-lg md:text-xl font-semibold'>Course Price : <span className='text-green-400'>₹{course?.coursePrice}</span></h1>
+                            <h1 className='text-lg md:text-xl font-semibold'>Price: <span className='text-green-400'>₹{course?.coursePrice}</span></h1>
                         </CardContent>
                         <CardFooter className='flex p-4 justify-center'>
                             {

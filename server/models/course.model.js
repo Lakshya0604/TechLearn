@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 
 const courseSchema = new mongoose.Schema({
+    isDemo: {type:Boolean, default:false},
+    demoKey: {type:String,index:true},
+    likes: [{type:mongoose.Schema.Types.ObjectId,ref:"User"}],
+    likeCount: {type:Number,default:0},
+    commentCount: {type:Number,default:0},
     courseTitle: {
         type: String,
         required: true

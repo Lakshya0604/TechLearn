@@ -144,7 +144,7 @@ const CourseTab = () => {
                             name="courseTitle"
                             value={input.courseTitle}
                             onChange={changeEventHandler}
-                            placeholder="Ex..Fullstack Developer" />
+                            placeholder="Course title" />
 
                     </div>
                     <div>
@@ -154,7 +154,7 @@ const CourseTab = () => {
                             name="subTitle"
                             value={input.subTitle}
                             onChange={changeEventHandler}
-                            placeholder="Ex..How to become a fullstack developer in 1 month ?" />
+                            placeholder="A short summary of your course" />
 
                     </div>
                     <div>
@@ -169,7 +169,7 @@ const CourseTab = () => {
                             }
                         />
                     </div>
-                    <div className='flex items-center gap-5'>
+                    <div className='grid grid-cols-1 gap-5 sm:grid-cols-3'>
                         <div>
                             <Label>Category</Label>
                             <Select value={input.category} onValueChange={selectCategory}>
@@ -216,17 +216,17 @@ const CourseTab = () => {
                                 value={input.coursePrice}
                                 onChange={changeEventHandler}
                                 placeholder="99"
-                                className='w-fit'
+                                className='w-full min-w-0'
                             />
                         </div>
                     </div>
                     <div>
-                        <Label>course thumbnail</Label>
+                        <Label>Course thumbnail</Label>
                         <Input
                             type="file"
                             onChange={selectThumbnail}
                             accept="image/*"
-                            className='w-fit'
+                            className='w-full min-w-0'
 
                         />
                         {

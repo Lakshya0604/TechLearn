@@ -88,15 +88,16 @@ const RichTextEditor = ({
     return (
         <div className={`rich-text-editor border border-gray-300 rounded-lg overflow-hidden ${className}`}>
             {/* Toolbar */}
-            <div className="bg-gray-50 border-b border-gray-300 p-2">
+            <div className="bg-muted text-foreground border-b border-border p-2">
                 <div className="flex flex-wrap gap-1">
-                    <button type="button" onClick={() => formatText('bold')} className="p-2 hover:bg-gray-200"><b>B</b></button>
-                    <button type="button" onClick={() => formatText('italic')} className="p-2 hover:bg-gray-200"><i>I</i></button>
-                    <button type="button" onClick={() => formatText('underline')} className="p-2 hover:bg-gray-200"><u>U</u></button>
+                    <button type="button" onClick={() => formatText('bold')} className="p-2 hover:bg-accent"><b>B</b></button>
+                    <button type="button" onClick={() => formatText('italic')} className="p-2 hover:bg-accent"><i>I</i></button>
+                    <button type="button" onClick={() => formatText('underline')} className="p-2 hover:bg-accent"><u>U</u></button>
 
                     <select
                         onChange={(e) => setHeading(e.target.value)}
-                        className="px-2 py-1 text-sm border border-gray-300 rounded"
+                        aria-label="Text style"
+                        className="px-2 py-1 text-sm border border-input rounded bg-background text-foreground"
                         defaultValue=""
                     >
                         <option value="">Normal</option>
@@ -105,14 +106,14 @@ const RichTextEditor = ({
                         <option value="3">Heading 3</option>
                     </select>
 
-                    <button type="button" onClick={() => formatText('insertUnorderedList')} className="p-2 hover:bg-gray-200">• List</button>
-                    <button type="button" onClick={() => formatText('insertOrderedList')} className="p-2 hover:bg-gray-200">1. List</button>
+                    <button type="button" onClick={() => formatText('insertUnorderedList')} className="p-2 hover:bg-accent">• List</button>
+                    <button type="button" onClick={() => formatText('insertOrderedList')} className="p-2 hover:bg-accent">1. List</button>
 
-                    <button type="button" onClick={() => insertElement('link')} className="p-2 hover:bg-gray-200">Link</button>
-                    <button type="button" onClick={() => insertElement('image')} className="p-2 hover:bg-gray-200">Image</button>
-                    <button type="button" onClick={() => insertElement('hr')} className="p-2 hover:bg-gray-200">HR</button>
+                    <button type="button" onClick={() => insertElement('link')} className="p-2 hover:bg-accent">Link</button>
+                    <button type="button" onClick={() => insertElement('image')} className="p-2 hover:bg-accent">Image</button>
+                    <button type="button" onClick={() => insertElement('hr')} className="p-2 hover:bg-accent">HR</button>
 
-                    <button type="button" onClick={clearFormatting} className="p-2 hover:bg-gray-200">Clear</button>
+                    <button type="button" onClick={clearFormatting} className="p-2 hover:bg-accent">Clear</button>
                 </div>
             </div>
 

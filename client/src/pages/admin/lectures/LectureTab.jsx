@@ -160,7 +160,7 @@ const LectureTab = () => {
                         accept='video/*'
                         onChange={fileChangeHandler}
                         disabled={mediaProgress}
-                        className='w-fit'
+                        className='w-full min-w-0'
                     />
                     {uploadVideoInfo?.videoUrl && !mediaProgress && (
                         <p className='text-sm text-green-600 mt-1'>

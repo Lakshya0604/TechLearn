@@ -54,7 +54,7 @@ export const checkOutSession = async (req, res) => {
                     currency: "inr",
                     product_data: {
                         name: course.courseTitle,
-                        description: course.description,
+                        description: course.subTitle || (course.description && course.description !== "undefined" ? course.description.replace(/<[^>]*>/g, "").slice(0, 500) : undefined),
                         images: course.courseThumbnail ? [course.courseThumbnail] : undefined
                     },
                     unit_amount: course.coursePrice * 100, // amount in paise

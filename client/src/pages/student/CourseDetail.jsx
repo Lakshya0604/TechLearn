@@ -55,7 +55,7 @@ const CourseDetail = () => {
             <div className='max-w-7xl mx-auto my-5 px-4 md:px-8 flex flex-col lg:flex-row justify-between gap-4'>
                 <div className='w-full lg:w-1/2 space-y-5'>
                     <h1 className='font-bold text-xl md:text-2xl'>Description</h1>
-                    <p className='text-sm' dangerouslySetInnerHTML={{ __html: course.description }} />
+                    <p className='text-sm' dangerouslySetInnerHTML={{ __html: course.description === "undefined" ? "" : course.description }} />
                     <Card>
                         <CardHeader>
                             <CardTitle>Course Content</CardTitle>

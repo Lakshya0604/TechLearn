@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useState } from 'react'
 const RichTextEditor = ({
     onChange,
     data,
-    placeholder = "Write something amazing...",
+    placeholder = "Describe what students will learn...",
     height = "300px",
     className = ""
 }) => {
@@ -120,9 +120,12 @@ const RichTextEditor = ({
             <div className="relative">
                 <div
                     ref={editorRef}
+                    role="textbox"
+                    aria-label="Course description"
+                    aria-multiline="true"
                     contentEditable
                     suppressContentEditableWarning
-                    className="editor-content min-h-[200px] p-4 outline-none"
+                    className="editor-content min-h-[200px] p-4 outline-none bg-background text-foreground"
                     style={{
                         height,
                         direction: "ltr",

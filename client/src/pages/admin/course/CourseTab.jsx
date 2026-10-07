@@ -36,11 +36,11 @@ const CourseTab = () => {
             const course = courseByIdData?.course;
             setInput({
                 courseTitle: course.courseTitle,
-                subTitle: course.subTitle,
-                description: course.description,
+                subTitle: course.subTitle || "",
+                description: course.description === "undefined" ? "" : (course.description || ""),
                 category: course.category,
                 courseLevel: course.courseLevel,
-                coursePrice: course.coursePrice,
+                coursePrice: course.coursePrice ?? "",
                 courseThumbnail: ""
             });
         }

@@ -1,4 +1,12 @@
-import { children, StrictMode } from 'react'
+// A deployment can retire a route chunk while a tab is still open.
+window.addEventListener('vite:preloadError', event => {
+  if (!sessionStorage.getItem('techlearn-chunk-reload')) {
+    sessionStorage.setItem('techlearn-chunk-reload', '1');
+    event.preventDefault();
+    window.location.reload();
+  }
+});
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'

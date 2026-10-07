@@ -6,7 +6,9 @@ window.addEventListener('vite:preloadError', event => {
     window.location.reload();
   }
 });
-import { StrictMode } from 'react'
+import { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
+import {userLoggedIn, userLoggedout} from './features/authSlice'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
@@ -17,8 +19,13 @@ import { useLoadUserQuery } from './features/api/authApi'
 import LoadingSpinner from './components/ui/LoadingSpinner'
 
 const Custom = ({ children }) => {
-  const { isLoading } = useLoadUserQuery();
-  return <>{isLoading ? <LoadingSpinner /> : <> {children}</>}</>
+  const dispatch = useDispatch();
+  const {data, error, isLoading} = useLoadUserQuery();
+  useEffect(() => {
+    if (data?.user) dispatch(userLoggedIn({user:data.user}));
+    else if (error?.status === 401 || error?.status === 403) dispatch(userLoggedout());
+  }, [data, error, dispatch]);
+  return <>{isLoading ? <LoadingSpinner /> : children}</>
 }
 
 

@@ -18,10 +18,18 @@ import {
     searchCourse,
     togglePublishCourse,
 } from "../controllers/course.controller.js";
+import {socialState,likeCourse,addComment,removeComment} from "../controllers/social.controller.js";
+import rateLimit from "express-rate-limit";
 import upload from "../utils/multer.js";
 
 const router = express.Router();
 
+const socialLimiter=rateLimit({windowMs:60000,max:20,standardHeaders:true,legacyHeaders:false});
+router.get('/social/:courseId',socialState);
+router.get('/social/:courseId/mine',isAuthenticated,socialState);
+router.put('/social/:courseId/like',isAuthenticated,socialLimiter,likeCourse);
+router.post('/social/:courseId/comments',isAuthenticated,socialLimiter,addComment);
+router.delete('/comments/:commentId',isAuthenticated,removeComment);
 // Static routes FIRST (before any dynamic /:param routes)
 router.route("/").post(isAuthenticated, requireInstructor, createCourse);
 router.route("/").get(isAuthenticated, getCreatorCourses);

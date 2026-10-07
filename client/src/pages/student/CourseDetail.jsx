@@ -1,3 +1,4 @@
+import CourseCommunity from "@/components/CourseCommunity";
 import PageState from '@/components/PageState';
 import BuyCourseButton from '@/components/BuyCourseButton';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,7 @@ const CourseDetail = () => {
             </div>
             <div className='max-w-7xl mx-auto my-5 px-4 md:px-8 flex flex-col lg:flex-row justify-between gap-4'>
                 <div className='w-full lg:w-1/2 space-y-5'>
+                    {course.isDemo && <p className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">Synthetic demo course. Teacher, enrollments, likes and seeded comments are demonstration data.</p>}
                     <h1 className='font-bold text-xl md:text-2xl'>Description</h1>
                     <p className='text-sm' dangerouslySetInnerHTML={{ __html: course.description === "undefined" ? "" : course.description }} />
                     <Card>
@@ -76,6 +78,7 @@ const CourseDetail = () => {
                             }
                         </CardContent>
                     </Card>
+                    <CourseCommunity courseId={courseId} />
                 </div>
                 <div className='w-full lg:w-1/3'>
                     <Card>

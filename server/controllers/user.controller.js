@@ -1,3 +1,4 @@
+import {consumeInstructorInvite} from './invite.controller.js';
 import { User } from '../models/user.model.js';
 import { Course } from '../models/course.model.js';
 import bcrypt from 'bcryptjs';
@@ -21,7 +22,7 @@ export const register = async (req, res) => {
         // and instructor signup requires the invite code when one is configured.
         if (role === "instructor") {
             const configuredCode = process.env.INSTRUCTOR_INVITE_CODE;
-            if (configuredCode && inviteCode !== configuredCode) {
+            if (process.env.INSTRUCTOR_EMAIL_ENABLED === 'true' ? !(await consumeInstructorInvite(email, inviteCode)) : (configuredCode && inviteCode !== configuredCode)) {
                 return res.status(403).json({ success: false, message: "A valid instructor invite code is required" });
             }
         } else {
@@ -86,7 +87,7 @@ export const login = async (req, res) => {
         }
 
         const user = await User.findOne({ email });
-        if (!user) {
+        if (!user || user.isDemo) {
             return res.status(400).json({ success: false, message: "Invalid email or password" });
         }
 

@@ -1,3 +1,4 @@
+import {API_BASE_URL} from "@/config/apiConfig"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,7 +19,7 @@ export default function Login() {
     name: "",
     email: "",
     password: "",
-    role: "student",
+    role: new URLSearchParams(window.location.search).get("role")==="instructor"?"instructor":"student",
     inviteCode: ""
   });
 
@@ -37,6 +38,8 @@ export default function Login() {
     { data: loginData, error: loginError, isLoading: isLoginLoading, isSuccess: isLoginSuccess }
   ] = useLoginUserMutation();
 
+  const [sendingCode,setSendingCode]=useState(false);
+  const requestCode=async()=>{setSendingCode(true);try{const r=await fetch(`${API_BASE_URL}/api/v1/user/instructor-invite`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:signupInput.email})});const d=await r.json();if(!r.ok)throw new Error(d.message);toast.success(d.message);}catch(e){toast.error(e.message||'Email could not be sent');}finally{setSendingCode(false);}};
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
@@ -276,16 +279,19 @@ export default function Login() {
 
               {signupInput.role === "instructor" && (
                 <div className="space-y-1">
-                  <Label htmlFor="signup-invite-code">Instructor invite code</Label>
+                  <Label htmlFor="signup-invite-code">Instructor signup code</Label>
                   <Input
                     id="signup-invite-code"
                     required autoComplete="off"
                     type="text"
                     name="inviteCode"
+                    inputMode="numeric" maxLength={6}
                     value={signupInput.inviteCode}
-                    placeholder="Required for instructor accounts"
+                    placeholder="6-digit code from your email"
                     onChange={(e) => changeInputHandler(e, "signup")}
                   />
+                  <Button type="button" variant="outline" className="w-full mt-2" disabled={sendingCode||!signupInput.email} onClick={requestCode}>{sendingCode?'Sending...':'Email me a signup code'}</Button>
+                  <p className="text-xs text-muted-foreground">One-time code, valid for 15 minutes. Check your spam folder too.</p>
                 </div>
               )}
 

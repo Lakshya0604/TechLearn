@@ -26,9 +26,9 @@ export const courseApi = createApi({
         }),
         //search courses
         getSearchCourse: builder.query({
-            query: ({ searchQuery, categories, shortByPrice }) => {
+            query: ({ searchQuery, categories, shortByPrice, sort="trending", page=1, demo="all" }) => {
                 //build query string
-                let queryString = `/search?query=${encodeURIComponent(searchQuery || '')}`
+                let queryString = `/search?query=${encodeURIComponent(searchQuery || '')}&sort=${sort}&page=${page}&demo=${demo}`
                 //append category - send as comma-separated string
                 if (categories && categories.length > 0) {
                     const categoriesString = categories.map(c => encodeURIComponent(c)).join(",");

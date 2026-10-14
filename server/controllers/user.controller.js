@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import {consumeInstructorInvite} from './invite.controller.js';
 import { User } from '../models/user.model.js';
 import { Course } from '../models/course.model.js';
@@ -199,3 +200,46 @@ export const updateUserProfile = async (req, res) => {
         });
     }
 };
+
+const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex');
+
+export const forgotPassword = async (req, res) => {
+    try {
+        const email = String(req.body?.email || '').toLowerCase().trim();
+        const user = email ? await User.findOne({ email }) : null;
+        if (user && !user.isDemo) {
+            const token = crypto.randomBytes(32).toString('hex');
+            user.resetHash = sha256(token);
+            user.resetExpires = new Date(Date.now() + 30 * 60 * 1000);
+            await user.save();
+            const link = `${process.env.FRONTEND_URL || ''}/reset-password/${token}`;
+            const { sendMail } = await import('../utils/mailer.js');
+            await sendMail(email, 'Reset your TechLearn password', `<p>Hi ${user.name},</p><p>You asked to reset your TechLearn password.</p><p><a href="${link}">${link}</a></p><p>The link works for 30 minutes. If you did not ask, ignore this mail.</p>`);
+        }
+        return res.status(200).json({ success: true, message: 'If that account exists, a reset link is on its way.' });
+    } catch (error) {
+        console.error('Error in forgotPassword:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+}
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { token = '', password = '' } = req.body || {};
+        if (String(password).length < 8) {
+            return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+        }
+        const user = await User.findOne({ resetHash: sha256(String(token)), resetExpires: { $gt: new Date() } });
+        if (!user) {
+            return res.status(400).json({ success: false, message: 'That reset link is invalid or expired. Request a new one.' });
+        }
+        user.password = await bcrypt.hash(String(password), 10);
+        user.resetHash = null;
+        user.resetExpires = null;
+        await user.save();
+        return res.status(200).json({ success: true, message: 'Password updated. You can log in with your new password.' });
+    } catch (error) {
+        console.error('Error in resetPassword:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+}

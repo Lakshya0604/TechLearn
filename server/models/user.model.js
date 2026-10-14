@@ -17,6 +17,8 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    resetHash: { type: String, default: null },
+    resetExpires: { type: Date, default: null },
     role: {
         type: String,
         enum: ["student", "instructor"],

@@ -9,7 +9,7 @@ import { useLoginUserMutation, useRegisterUserMutation } from "@/features/api/au
 import { useState, useEffect } from "react"
 import { Loader2, User, Mail, Lock } from "lucide-react"
 import { toast } from "sonner"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useDispatch } from "react-redux"
 import { userLoggedIn } from "@/features/authSlice"
 
@@ -178,6 +178,9 @@ export default function Login() {
                     onChange={(e) => changeInputHandler(e, "login")}
                     className="pl-9"
                   />
+                </div>
+                <div className="text-right">
+                  <Link to="/forgot-password" className="text-sm text-primary underline">Forgot password?</Link>
                 </div>
               </div>
 

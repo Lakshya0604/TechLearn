@@ -8,7 +8,8 @@ export const authApi = createApi({
     reducerPath: 'authApi',
     baseQuery: fetchBaseQuery({
         baseUrl: USER_API,
-        credentials: 'include'
+        credentials: 'include',
+        timeout: 25000
     }),
     endpoints: (builder) => ({
         loginUser: builder.mutation({

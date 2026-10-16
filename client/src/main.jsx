@@ -6,7 +6,7 @@ window.addEventListener('vite:preloadError', event => {
     window.location.reload();
   }
 });
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {userLoggedIn, userLoggedout} from './features/authSlice'
 import { createRoot } from 'react-dom/client'
@@ -22,11 +22,15 @@ const Custom = ({ children }) => {
   const dispatch = useDispatch();
   const currentUser = useSelector(state => state.auth.user);
   const {data, error, isLoading} = useLoadUserQuery();
+  const [waited, setWaited] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setWaited(true), 3000); return () => clearTimeout(t); }, []);
+  const path = window.location.pathname;
+  const publicPath = path === '/' || path === '/login' || path.startsWith('/forgot-password') || path.startsWith('/reset-password');
   useEffect(() => {
     if (data?.user) dispatch(userLoggedIn({user:data.user}));
     else if (error?.status === 401 || error?.status === 403) dispatch(userLoggedout());
   }, [data, error, dispatch]);
-  return <>{(isLoading || (data?.user && currentUser?._id !== data.user._id)) ? <LoadingSpinner /> : children}</>
+  return <>{((isLoading && !(waited && publicPath)) || (data?.user && currentUser?._id !== data.user._id)) ? <LoadingSpinner /> : children}</>
 }
 
 

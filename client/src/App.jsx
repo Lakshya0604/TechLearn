@@ -1,6 +1,8 @@
 import { lazy, Suspense } from "react";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
 const Login = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 import HeroSection from "./pages/student/HeroSection";
 import { createBrowserRouter } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";

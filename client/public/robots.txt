@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /my-learning
+Disallow: /profile
+Disallow: /admin
+Disallow: /course-progress/
+Disallow: /reset-password/
+
+Sitemap: https://techlearn-1bgv.onrender.com/sitemap.xml
